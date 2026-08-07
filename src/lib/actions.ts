@@ -7,6 +7,8 @@ import { runDatabaseSetup } from "@/lib/supabase/setup-database";
 import { requireAdmin, verifyPassword, createSession, destroySession, hashPassword, initializeAdmin } from "@/lib/auth";
 import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { slugify } from "@/lib/utils";
+import { chunkArray, normalizeWhatsAppPhone, renderBroadcastMessage, type PatientImportRow } from "@/lib/broadcast-utils";
+import { isWhatsAppCloudConfigured, sendWhatsAppTextMessage } from "@/lib/whatsapp-cloud";
 import type { AppointmentFormData } from "@/types";
 
 export async function loginAction(formData: FormData) {
@@ -520,4 +522,303 @@ export async function submitContactForm(formData: FormData) {
   });
 
   return { success: true };
+}
+
+export async function managePatient(
+  action: "create" | "update" | "delete" | "toggle",
+  data: Record<string, unknown>
+) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  if (action === "create") {
+    const phone = normalizeWhatsAppPhone(sanitizePhone(data.phone as string));
+    if (!phone || phone.length < 10) {
+      return { error: "Valid phone number is required" };
+    }
+
+    const { error } = await supabase.from("patient_recipients").insert({
+      name: sanitizeText(data.name as string),
+      phone,
+      email: sanitizeText((data.email as string) || "") || null,
+      city: sanitizeText((data.city as string) || "") || null,
+      age: data.age ? parseInt(String(data.age), 10) : null,
+      gender: (data.gender as string) || null,
+      notes: sanitizeText((data.notes as string) || "") || null,
+      is_active: true,
+    });
+
+    if (error?.code === "23505") return { error: "Patient with this phone already exists" };
+    if (error) return { error: error.message };
+  } else if (action === "update") {
+    const phone = normalizeWhatsAppPhone(sanitizePhone(data.phone as string));
+    const { error } = await supabase
+      .from("patient_recipients")
+      .update({
+        name: sanitizeText(data.name as string),
+        phone,
+        email: sanitizeText((data.email as string) || "") || null,
+        city: sanitizeText((data.city as string) || "") || null,
+        age: data.age ? parseInt(String(data.age), 10) : null,
+        gender: (data.gender as string) || null,
+        notes: sanitizeText((data.notes as string) || "") || null,
+        is_active: data.is_active as boolean ?? true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.id as string);
+
+    if (error?.code === "23505") return { error: "Patient with this phone already exists" };
+    if (error) return { error: error.message };
+  } else if (action === "delete") {
+    await supabase.from("patient_recipients").delete().eq("id", data.id as string);
+  } else if (action === "toggle") {
+    await supabase
+      .from("patient_recipients")
+      .update({ is_active: data.is_active as boolean, updated_at: new Date().toISOString() })
+      .eq("id", data.id as string);
+  }
+
+  revalidatePath("/admin/patients");
+  revalidatePath("/admin/broadcasts");
+  return { success: true };
+}
+
+export async function importPatientsAction(rows: PatientImportRow[]) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  if (!rows.length) return { error: "No patients to import" };
+  if (rows.length > 1000) return { error: "Maximum 1000 patients per import batch" };
+
+  const prepared = rows
+    .map((row) => {
+      const name = sanitizeText(row.name);
+      const phone = normalizeWhatsAppPhone(sanitizePhone(row.phone));
+      if (!name || !phone || phone.length < 10) return null;
+      return {
+        name,
+        phone,
+        email: sanitizeText(row.email || "") || null,
+        city: sanitizeText(row.city || "") || null,
+        age: row.age && row.age > 0 ? row.age : null,
+        gender: row.gender || null,
+        notes: sanitizeText(row.notes || "") || null,
+        is_active: true,
+      };
+    })
+    .filter(Boolean) as Array<Record<string, unknown>>;
+
+  if (!prepared.length) return { error: "No valid patient rows found" };
+
+  const { error } = await supabase
+    .from("patient_recipients")
+    .upsert(prepared, { onConflict: "phone", ignoreDuplicates: false });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/patients");
+  revalidatePath("/admin/broadcasts");
+  return { success: true, imported: prepared.length };
+}
+
+export async function createBroadcastAction(title: string, notice: string) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const cleanTitle = sanitizeText(title);
+  const cleanNotice = sanitizeText(notice);
+
+  if (!cleanTitle || !cleanNotice) {
+    return { error: "Title and notice message are required" };
+  }
+
+  const { data, error } = await supabase
+    .from("broadcasts")
+    .insert({
+      title: cleanTitle,
+      notice: cleanNotice,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/broadcasts");
+  return { success: true, id: data.id };
+}
+
+export async function startBroadcastAction(broadcastId: string) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: broadcast, error: broadcastError } = await supabase
+    .from("broadcasts")
+    .select("*")
+    .eq("id", broadcastId)
+    .single();
+
+  if (broadcastError || !broadcast) return { error: "Broadcast not found" };
+  if (broadcast.status !== "draft" && broadcast.status !== "failed") {
+    return { error: "This broadcast has already been started" };
+  }
+
+  const { data: patients, error: patientsError } = await supabase
+    .from("patient_recipients")
+    .select("id, name, phone, city")
+    .eq("is_active", true);
+
+  if (patientsError) return { error: patientsError.message };
+  if (!patients?.length) return { error: "No active patients found. Add patients first." };
+
+  await supabase.from("broadcast_messages").delete().eq("broadcast_id", broadcastId);
+
+  const messageRows = patients.map((patient) => ({
+    broadcast_id: broadcastId,
+    patient_id: patient.id,
+    phone: patient.phone,
+    patient_name: patient.name,
+    message_body: renderBroadcastMessage(broadcast.notice, patient),
+    status: "pending" as const,
+  }));
+
+  const chunks = chunkArray(messageRows, 500);
+  for (const chunk of chunks) {
+    const { error: insertError } = await supabase.from("broadcast_messages").insert(chunk);
+    if (insertError) return { error: insertError.message };
+  }
+
+  await supabase
+    .from("broadcasts")
+    .update({
+      status: "queued",
+      total_recipients: patients.length,
+      sent_count: 0,
+      failed_count: 0,
+      started_at: new Date().toISOString(),
+      completed_at: null,
+    })
+    .eq("id", broadcastId);
+
+  revalidatePath("/admin/broadcasts");
+  return {
+    success: true,
+    total: patients.length,
+    whatsappConfigured: isWhatsAppCloudConfigured(),
+  };
+}
+
+export async function sendBroadcastBatchAction(broadcastId: string, batchSize = 50) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: broadcast } = await supabase
+    .from("broadcasts")
+    .select("*")
+    .eq("id", broadcastId)
+    .single();
+
+  if (!broadcast) return { error: "Broadcast not found" };
+  if (broadcast.status === "completed" || broadcast.status === "cancelled") {
+    return { success: true, done: true, sent: broadcast.sent_count, failed: broadcast.failed_count, total: broadcast.total_recipients };
+  }
+
+  if (broadcast.status === "draft") {
+    return { error: "Start the broadcast before sending messages" };
+  }
+
+  if (!isWhatsAppCloudConfigured()) {
+    return {
+      error: "WhatsApp Cloud API is not configured. Add WHATSAPP_CLOUD_API_TOKEN and WHATSAPP_PHONE_NUMBER_ID to .env.local",
+    };
+  }
+
+  await supabase.from("broadcasts").update({ status: "sending" }).eq("id", broadcastId);
+
+  const { data: pendingMessages, error: fetchError } = await supabase
+    .from("broadcast_messages")
+    .select("*")
+    .eq("broadcast_id", broadcastId)
+    .eq("status", "pending")
+    .limit(batchSize);
+
+  if (fetchError) return { error: fetchError.message };
+
+  if (!pendingMessages?.length) {
+    await supabase
+      .from("broadcasts")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("id", broadcastId);
+
+    revalidatePath("/admin/broadcasts");
+    return { success: true, done: true, sent: broadcast.sent_count, failed: broadcast.failed_count, total: broadcast.total_recipients };
+  }
+
+  let sentDelta = 0;
+  let failedDelta = 0;
+
+  for (const msg of pendingMessages) {
+    const result = await sendWhatsAppTextMessage(msg.phone, msg.message_body);
+
+    if (result.success) {
+      sentDelta++;
+      await supabase
+        .from("broadcast_messages")
+        .update({ status: "sent", sent_at: new Date().toISOString(), error_message: null })
+        .eq("id", msg.id);
+    } else {
+      failedDelta++;
+      await supabase
+        .from("broadcast_messages")
+        .update({ status: "failed", error_message: result.error || "Send failed" })
+        .eq("id", msg.id);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+
+  const newSent = (broadcast.sent_count || 0) + sentDelta;
+  const newFailed = (broadcast.failed_count || 0) + failedDelta;
+  const remaining = broadcast.total_recipients - newSent - newFailed;
+  const isDone = remaining <= 0;
+
+  await supabase
+    .from("broadcasts")
+    .update({
+      sent_count: newSent,
+      failed_count: newFailed,
+      status: isDone ? "completed" : "sending",
+      completed_at: isDone ? new Date().toISOString() : null,
+    })
+    .eq("id", broadcastId);
+
+  revalidatePath("/admin/broadcasts");
+  return {
+    success: true,
+    done: isDone,
+    sent: newSent,
+    failed: newFailed,
+    total: broadcast.total_recipients,
+    processedThisBatch: pendingMessages.length,
+  };
+}
+
+export async function deleteBroadcastAction(broadcastId: string) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+  await supabase.from("broadcasts").delete().eq("id", broadcastId);
+  revalidatePath("/admin/broadcasts");
+  return { success: true };
+}
+
+export async function getPatientCountAction() {
+  await requireAdmin();
+  const supabase = createAdminClient();
+  const { count, error } = await supabase
+    .from("patient_recipients")
+    .select("*", { count: "exact", head: true })
+    .eq("is_active", true);
+
+  if (error) return { error: error.message, count: 0 };
+  return { count: count || 0 };
 }

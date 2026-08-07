@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Image, Stethoscope, MessageSquare,
-  Settings, Clock, FileText, HelpCircle, LogOut, Menu, X, Bell
+  Settings, Clock, FileText, HelpCircle, LogOut, Menu, X, Bell, Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/lib/actions";
@@ -13,6 +13,8 @@ import { useState } from "react";
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/appointments", label: "Appointments", icon: Calendar },
+  { href: "/admin/patients", label: "Patients", icon: Users },
+  { href: "/admin/broadcasts", label: "Broadcasts", icon: Bell },
   { href: "/admin/doctor", label: "Doctor", icon: Stethoscope },
   { href: "/admin/gallery", label: "Gallery", icon: Image },
   { href: "/admin/services", label: "Services", icon: Stethoscope },

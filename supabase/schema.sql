@@ -174,10 +174,58 @@ CREATE TABLE IF NOT EXISTS visitor_stats (
   UNIQUE(visit_date)
 );
 
+-- Patient recipients (bulk messaging list, 10k+ capacity)
+CREATE TABLE IF NOT EXISTS patient_recipients (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL UNIQUE,
+  email TEXT,
+  city TEXT,
+  age INTEGER,
+  gender TEXT CHECK (gender IS NULL OR gender IN ('Male', 'Female', 'Other')),
+  notes TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Broadcast notices / campaigns
+CREATE TABLE IF NOT EXISTS broadcasts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  notice TEXT NOT NULL,
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'queued', 'sending', 'completed', 'failed', 'cancelled')),
+  total_recipients INTEGER DEFAULT 0,
+  sent_count INTEGER DEFAULT 0,
+  failed_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ
+);
+
+-- Individual broadcast message delivery logs
+CREATE TABLE IF NOT EXISTS broadcast_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  broadcast_id UUID NOT NULL REFERENCES broadcasts(id) ON DELETE CASCADE,
+  patient_id UUID REFERENCES patient_recipients(id) ON DELETE SET NULL,
+  phone TEXT NOT NULL,
+  patient_name TEXT,
+  message_body TEXT NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed', 'skipped')),
+  error_message TEXT,
+  sent_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(preferred_date);
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_appointments_phone ON appointments(phone);
+CREATE INDEX IF NOT EXISTS idx_patient_recipients_phone ON patient_recipients(phone);
+CREATE INDEX IF NOT EXISTS idx_patient_recipients_active ON patient_recipients(is_active);
+CREATE INDEX IF NOT EXISTS idx_patient_recipients_name ON patient_recipients(name);
+CREATE INDEX IF NOT EXISTS idx_broadcast_messages_broadcast ON broadcast_messages(broadcast_id);
+CREATE INDEX IF NOT EXISTS idx_broadcast_messages_status ON broadcast_messages(broadcast_id, status);
 CREATE INDEX IF NOT EXISTS idx_gallery_category ON gallery(category);
 CREATE INDEX IF NOT EXISTS idx_blogs_slug ON blogs(slug);
 CREATE INDEX IF NOT EXISTS idx_blogs_published ON blogs(is_published);
@@ -196,6 +244,9 @@ ALTER TABLE blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE faq ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE visitor_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE patient_recipients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE broadcasts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE broadcast_messages ENABLE ROW LEVEL SECURITY;
 
 -- Public read policies
 DROP POLICY IF EXISTS "Public read doctor" ON doctor;
@@ -248,6 +299,12 @@ DROP POLICY IF EXISTS "Service role all notifications" ON notifications;
 CREATE POLICY "Service role all notifications" ON notifications FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role all visitor_stats" ON visitor_stats;
 CREATE POLICY "Service role all visitor_stats" ON visitor_stats FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role all patient_recipients" ON patient_recipients;
+CREATE POLICY "Service role all patient_recipients" ON patient_recipients FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role all broadcasts" ON broadcasts;
+CREATE POLICY "Service role all broadcasts" ON broadcasts FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role all broadcast_messages" ON broadcast_messages;
+CREATE POLICY "Service role all broadcast_messages" ON broadcast_messages FOR ALL USING (true) WITH CHECK (true);
 
 -- Storage buckets (run in Supabase Dashboard > Storage)
 -- Create buckets: doctor-images, gallery, videos, testimonials, blogs, certificates

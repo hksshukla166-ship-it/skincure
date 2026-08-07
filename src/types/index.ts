@@ -188,3 +188,43 @@ export interface AppointmentFormData {
   preferred_date: string;
   slot_time: string;
 }
+
+export interface PatientRecipient {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  city: string | null;
+  age: number | null;
+  gender: "Male" | "Female" | "Other" | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Broadcast {
+  id: string;
+  title: string;
+  notice: string;
+  status: "draft" | "queued" | "sending" | "completed" | "failed" | "cancelled";
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface BroadcastMessage {
+  id: string;
+  broadcast_id: string;
+  patient_id: string | null;
+  phone: string;
+  patient_name: string | null;
+  message_body: string;
+  status: "pending" | "sent" | "failed" | "skipped";
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
