@@ -69,6 +69,28 @@ async function main() {
   let schema = readFileSync(resolve(root, "supabase", "schema.sql"), "utf-8");
   schema = schema.split("\n").filter((line) => !line.trim().startsWith("--")).join("\n");
 
+  const migrationSql = readFileSync(resolve(root, "supabase", "migrations.sql"), "utf-8")
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("--"))
+    .join("\n");
+
+  console.log("Running migrations...\n");
+  for (const statement of splitSqlStatements(migrationSql)) {
+    const preview = statement.slice(0, 55).replace(/\s+/g, " ");
+    try {
+      await client.query(statement);
+      console.log("OK:", preview);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("already exists") || msg.includes("duplicate")) {
+        console.log("SKIP:", preview);
+      } else {
+        console.error("FAIL:", preview, msg);
+      }
+    }
+  }
+
+  console.log("\nRunning schema...\n");
   const statements = splitSqlStatements(schema);
   let ok = 0;
   let skip = 0;

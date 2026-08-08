@@ -64,6 +64,21 @@ export function getCallUrl(phone: string): string {
   return `tel:+91${cleanPhone.slice(-10)}`;
 }
 
+export const SKIN_CURE_MAPS_QUERY =
+  "Skin Cure, Shop A-14, Narayan Plaza, Link Road, Telipara, Bilaspur, Chhattisgarh 495001";
+
+export function getGoogleMapsSearchUrl(query: string = SKIN_CURE_MAPS_QUERY): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function getGoogleMapsEmbedUrl(
+  customEmbed?: string | null,
+  query: string = SKIN_CURE_MAPS_QUERY
+): string {
+  if (customEmbed?.trim()) return customEmbed.trim();
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=17&output=embed`;
+}
+
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

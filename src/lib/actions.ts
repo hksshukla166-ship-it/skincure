@@ -59,6 +59,23 @@ export async function loginAction(formData: FormData) {
   redirect("/admin/dashboard");
 }
 
+export async function initializeDatabaseAction() {
+  const [dbResult, bucketResult] = await Promise.all([
+    runDatabaseSetup(),
+    ensureStorageBuckets().catch(() => ({ created: [], existing: [], errors: [] as string[] })),
+  ]);
+
+  if (!dbResult.success) {
+    return { error: dbResult.message, details: dbResult.details };
+  }
+
+  return {
+    success: true,
+    message: dbResult.message,
+    buckets: bucketResult,
+  };
+}
+
 export async function logoutAction() {
   await destroySession();
   return { success: true };

@@ -327,7 +327,9 @@ CREATE POLICY "Service role all broadcast_messages" ON broadcast_messages FOR AL
 -- Create buckets: doctor-images, gallery, videos, testimonials, blogs, certificates
 -- Set public read access for all buckets
 
--- Seed default data
+-- Seed default data (run after migrations.sql for upgraded databases)
+ALTER TABLE doctor ADD COLUMN IF NOT EXISTS honor_title TEXT DEFAULT 'Ex president IADVL CG 2025';
+
 INSERT INTO settings (clinic_name, phone, address, opening_hours) 
 SELECT 'SKIN CURE', '07828093301', 
   'Skin Cure Link Road Narayan Plaza Agrasen Chowk Telipara Bilaspur Chhattisgarh 495001',

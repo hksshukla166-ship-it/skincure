@@ -7,6 +7,7 @@ import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { PatientFeedbackSection } from "@/components/home/PatientFeedbackSection";
 import { HomeAppointmentHeader, HomeCTASection } from "@/components/home/HomeSections";
+import { HomeMapSection } from "@/components/home/HomeMapSection";
 import { AppointmentForm } from "@/components/appointment/AppointmentForm";
 import { getSettings, getDoctor, getServices, getGallery, getTestimonials, getFeedbackVideos, incrementVisitorCount } from "@/lib/data";
 
@@ -72,6 +73,10 @@ export default async function HomePage() {
         </section>
 
         <HomeCTASection />
+        <HomeMapSection
+          settings={settings}
+          mapsEmbed={process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED || settings?.google_maps_link}
+        />
       </main>
       <Footer settings={settings} />
       <StickyButtons settings={settings} />

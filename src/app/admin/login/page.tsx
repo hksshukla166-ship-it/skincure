@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { loginAction } from "@/lib/actions";
+import { loginAction, initializeDatabaseAction } from "@/lib/actions";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { toast } from "sonner";
@@ -27,16 +27,16 @@ export default function AdminLoginForm() {
   const handleInitializeDatabase = async () => {
     setInitializing(true);
     try {
-      const response = await fetch("/api/setup/database", { method: "POST" });
-      const data = await response.json();
+      const result = await initializeDatabaseAction();
 
-      if (data.success) {
-        toast.success("Database ready! You can sign in now.");
-      } else {
-        toast.error(data.database?.message || data.error || "Database setup failed");
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+
+      toast.success(result.message || "Database ready! Sign in with ASkiNcare / SAskinCare134@1");
     } catch {
-      toast.error("Could not connect to setup. Is the dev server running?");
+      toast.error("Database setup failed. Restart the server and try again.");
     } finally {
       setInitializing(false);
     }
@@ -84,7 +84,7 @@ export default function AdminLoginForm() {
 
         <div className="mt-6 pt-6 border-t border-white/10">
           <p className="text-primary-300 text-sm text-center mb-3">
-            First time setup? Create database tables before signing in.
+            First time or seeing errors? Initialize the database, then sign in.
           </p>
           <Button
             type="button"
