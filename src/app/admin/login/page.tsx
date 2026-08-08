@@ -1,19 +1,16 @@
 import { Lock } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { initializeAdmin } from "@/lib/auth";
 
 export default async function AdminLoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await initializeAdmin();
-  const { error } = await searchParams;
+  const params = await searchParams;
+  const error = params.error;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 p-4">
-      <GlassCard className="w-full max-w-md dark" dark>
+      <div className="w-full max-w-md rounded-2xl p-6 bg-white/10 backdrop-blur-xl border border-white/20 shadow-premium">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center mb-4">
             <Lock className="w-8 h-8 text-white" />
@@ -24,7 +21,7 @@ export default async function AdminLoginPage({
 
         {error && (
           <div className="mb-5 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {decodeURIComponent(error)}
+            {error}
           </div>
         )}
 
@@ -38,7 +35,6 @@ export default async function AdminLoginPage({
               autoComplete="username"
               defaultValue="ASkiNcare"
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-gold-500"
-              placeholder="Enter username"
             />
           </div>
           <div>
@@ -50,14 +46,16 @@ export default async function AdminLoginPage({
               autoComplete="current-password"
               defaultValue="SAskinCare134@1"
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-gold-500"
-              placeholder="Enter password"
             />
           </div>
-          <Button type="submit" variant="gold" className="w-full">
+          <button
+            type="submit"
+            className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-gold-600 to-gold-400 text-white font-semibold hover:shadow-gold transition-all"
+          >
             Sign In
-          </Button>
+          </button>
         </form>
-      </GlassCard>
+      </div>
     </div>
   );
 }
