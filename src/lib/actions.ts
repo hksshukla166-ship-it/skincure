@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureStorageBuckets } from "@/lib/supabase/buckets";
 import { runDatabaseSetup } from "@/lib/supabase/setup-database";
@@ -31,7 +30,7 @@ export async function loginAction(formData: FormData) {
       .maybeSingle();
 
     if (profileError?.code === "PGRST205" || profileError?.code === "42P01") {
-      return { error: "Database not initialized. Click 'Initialize Database' below first." };
+      return { error: "Admin database is not ready. Please contact your developer." };
     }
 
     if (profileError) {
@@ -48,6 +47,7 @@ export async function loginAction(formData: FormData) {
     }
 
     await createSession(profile.id);
+    return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
     if (message.includes("Missing NEXT_PUBLIC_SUPABASE") || message.includes("SUPABASE_SERVICE_ROLE")) {
@@ -55,8 +55,6 @@ export async function loginAction(formData: FormData) {
     }
     return { error: message };
   }
-
-  redirect("/admin/dashboard");
 }
 
 export async function initializeDatabaseAction() {
