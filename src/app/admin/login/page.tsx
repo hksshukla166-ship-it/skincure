@@ -1,4 +1,7 @@
 import { Lock } from "lucide-react";
+import { loginAdminAction } from "./actions";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminLoginPage({
   searchParams,
@@ -25,7 +28,7 @@ export default async function AdminLoginPage({
           </div>
         )}
 
-        <form action="/api/admin/login" method="POST" className="space-y-5">
+        <form action={loginAdminAction} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-primary-200 mb-1">Username</label>
             <input
@@ -44,7 +47,6 @@ export default async function AdminLoginPage({
               name="password"
               required
               autoComplete="current-password"
-              defaultValue="SAskinCare134@1"
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-gold-500"
             />
           </div>

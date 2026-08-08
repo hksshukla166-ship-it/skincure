@@ -7,9 +7,10 @@ export { SESSION_COOKIE, SESSION_DURATION };
 function shouldUseSecureCookies(): boolean {
   if (process.env.COOKIE_SECURE === "true") return true;
   if (process.env.COOKIE_SECURE === "false") return false;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || "";
   if (siteUrl.startsWith("http://")) return false;
-  return process.env.NODE_ENV === "production";
+  if (siteUrl.includes("localhost")) return false;
+  return true;
 }
 
 export async function hashPassword(password: string): Promise<string> {

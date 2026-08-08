@@ -19,7 +19,7 @@ export async function authenticateAdmin(
   }
 
   if (!isSupabaseConfigured()) {
-    return { ok: false, error: "Supabase is not configured in .env.local" };
+    return { ok: false, error: "Server configuration missing. Add Supabase keys to hosting environment variables." };
   }
 
   try {
