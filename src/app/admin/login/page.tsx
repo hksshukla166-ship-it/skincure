@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { loginAction } from "@/lib/actions";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { toast } from "sonner";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, Database } from "lucide-react";
 
 export default function AdminLoginForm() {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [initializing, setInitializing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,15 +18,28 @@ export default function AdminLoginForm() {
     const formData = new FormData(e.currentTarget);
     const result = await loginAction(formData);
 
-    if (result.error) {
+    if (result?.error) {
       toast.error(result.error);
       setLoading(false);
-      return;
     }
+  };
 
-    toast.success("Login successful!");
-    router.push("/admin/dashboard");
-    router.refresh();
+  const handleInitializeDatabase = async () => {
+    setInitializing(true);
+    try {
+      const response = await fetch("/api/setup/database", { method: "POST" });
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Database ready! You can sign in now.");
+      } else {
+        toast.error(data.database?.message || data.error || "Database setup failed");
+      }
+    } catch {
+      toast.error("Could not connect to setup. Is the dev server running?");
+    } finally {
+      setInitializing(false);
+    }
   };
 
   return (
@@ -65,10 +77,26 @@ export default function AdminLoginForm() {
               placeholder="Enter password"
             />
           </div>
-          <Button type="submit" variant="gold" className="w-full" disabled={loading}>
+          <Button type="submit" variant="gold" className="w-full" disabled={loading || initializing}>
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
           </Button>
         </form>
+
+        <div className="mt-6 pt-6 border-t border-white/10">
+          <p className="text-primary-300 text-sm text-center mb-3">
+            First time setup? Create database tables before signing in.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-white/20 text-white hover:bg-white/10"
+            disabled={loading || initializing}
+            onClick={handleInitializeDatabase}
+          >
+            {initializing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Database className="w-5 h-5" />}
+            Initialize Database
+          </Button>
+        </div>
       </GlassCard>
     </div>
   );

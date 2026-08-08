@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ensureStorageBuckets } from "@/lib/supabase/buckets";
 import { runDatabaseSetup } from "@/lib/supabase/setup-database";
@@ -19,30 +20,43 @@ export async function loginAction(formData: FormData) {
     return { error: "Username and password are required" };
   }
 
-  await initializeAdmin();
+  try {
+    await initializeAdmin();
 
-  const supabase = createAdminClient();
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .maybeSingle();
+    const supabase = createAdminClient();
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("username", username)
+      .maybeSingle();
 
-  if (profileError?.code === "PGRST205") {
-    return { error: "Database not initialized. Use 'Initialize Database' on login page first." };
+    if (profileError?.code === "PGRST205" || profileError?.code === "42P01") {
+      return { error: "Database not initialized. Click 'Initialize Database' below first." };
+    }
+
+    if (profileError) {
+      return { error: `Login failed: ${profileError.message}` };
+    }
+
+    if (!profile) {
+      return { error: "Invalid username or password" };
+    }
+
+    const isValid = await verifyPassword(password, profile.password_hash);
+    if (!isValid) {
+      return { error: "Invalid username or password" };
+    }
+
+    await createSession(profile.id);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Login failed";
+    if (message.includes("Missing NEXT_PUBLIC_SUPABASE") || message.includes("SUPABASE_SERVICE_ROLE")) {
+      return { error: "Supabase is not configured. Check .env.local and restart the server." };
+    }
+    return { error: message };
   }
 
-  if (!profile) {
-    return { error: "Invalid credentials" };
-  }
-
-  const isValid = await verifyPassword(password, profile.password_hash);
-  if (!isValid) {
-    return { error: "Invalid credentials" };
-  }
-
-  await createSession(profile.id);
-  return { success: true };
+  redirect("/admin/dashboard");
 }
 
 export async function logoutAction() {

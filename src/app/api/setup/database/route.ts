@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runDatabaseSetup } from "@/lib/supabase/setup-database";
 import { ensureStorageBuckets } from "@/lib/supabase/buckets";
+import { initializeAdmin } from "@/lib/auth";
 
 export async function POST() {
   try {
@@ -8,6 +9,10 @@ export async function POST() {
       runDatabaseSetup(),
       ensureStorageBuckets(),
     ]);
+
+    if (dbResult.success) {
+      await initializeAdmin();
+    }
 
     return NextResponse.json({
       database: dbResult,

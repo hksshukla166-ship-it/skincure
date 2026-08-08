@@ -5,6 +5,14 @@ import { createAdminClient } from "./supabase/admin";
 const SESSION_COOKIE = "skin_cure_admin_session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days
 
+function shouldUseSecureCookies(): boolean {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  if (siteUrl.startsWith("http://")) return false;
+  return process.env.NODE_ENV === "production";
+}
+
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
 }
@@ -26,7 +34,7 @@ export async function createSession(userId: string): Promise<void> {
 
   cookieStore.set(SESSION_COOKIE, Buffer.from(sessionData).toString("base64"), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookies(),
     sameSite: "lax",
     maxAge: SESSION_DURATION,
     path: "/",
