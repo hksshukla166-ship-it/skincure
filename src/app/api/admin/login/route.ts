@@ -1,58 +1,85 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { initializeAdmin, verifyPassword, SESSION_COOKIE, SESSION_DURATION } from "@/lib/auth";
-import { sanitizeText } from "@/lib/sanitize";
+import { authenticateAdmin } from "@/lib/admin-login";
+import { SESSION_COOKIE, SESSION_DURATION } from "@/lib/auth";
+
+export const runtime = "nodejs";
+
+function loginRedirect(request: NextRequest, error?: string) {
+  const url = new URL("/admin/login", request.url);
+  if (error) url.searchParams.set("error", error);
+  return NextResponse.redirect(url);
+}
+
+function dashboardRedirect(request: NextRequest, userId: string) {
+  const sessionData = JSON.stringify({
+    userId,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + SESSION_DURATION * 1000,
+  });
+
+  const response = NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  response.cookies.set(SESSION_COOKIE, Buffer.from(sessionData).toString("base64"), {
+    httpOnly: true,
+    secure: request.nextUrl.protocol === "https:",
+    sameSite: "lax",
+    maxAge: SESSION_DURATION,
+    path: "/",
+  });
+  return response;
+}
+
+async function readCredentials(request: NextRequest) {
+  const contentType = request.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const body = await request.json();
+    return {
+      username: body.username as string,
+      password: body.password as string,
+    };
+  }
+
+  const formData = await request.formData();
+  return {
+    username: formData.get("username") as string,
+    password: formData.get("password") as string,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const username = sanitizeText(body.username || "");
-    const password = typeof body.password === "string" ? body.password : "";
+    const { username, password } = await readCredentials(request);
+    const result = await authenticateAdmin(username, password);
 
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+    if (!result.ok) {
+      const wantsJson = (request.headers.get("content-type") || "").includes("application/json");
+      if (wantsJson) {
+        return NextResponse.json({ error: result.error }, { status: 401 });
+      }
+      return loginRedirect(request, result.error);
     }
 
-    await initializeAdmin();
-
-    const supabase = createAdminClient();
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("username", username)
-      .maybeSingle();
-
-    if (profileError?.code === "PGRST205" || profileError?.code === "42P01") {
-      return NextResponse.json({ error: "Admin database is not ready." }, { status: 503 });
+    const wantsJson = (request.headers.get("content-type") || "").includes("application/json");
+    if (wantsJson) {
+      const response = NextResponse.json({ success: true });
+      const sessionData = JSON.stringify({
+        userId: result.userId,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + SESSION_DURATION * 1000,
+      });
+      response.cookies.set(SESSION_COOKIE, Buffer.from(sessionData).toString("base64"), {
+        httpOnly: true,
+        secure: request.nextUrl.protocol === "https:",
+        sameSite: "lax",
+        maxAge: SESSION_DURATION,
+        path: "/",
+      });
+      return response;
     }
 
-    if (profileError || !profile?.password_hash) {
-      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
-    }
-
-    const isValid = await verifyPassword(password, profile.password_hash);
-    if (!isValid) {
-      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
-    }
-
-    const sessionData = JSON.stringify({
-      userId: profile.id,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + SESSION_DURATION * 1000,
-    });
-
-    const response = NextResponse.json({ success: true });
-    response.cookies.set(SESSION_COOKIE, Buffer.from(sessionData).toString("base64"), {
-      httpOnly: true,
-      secure: request.nextUrl.protocol === "https:",
-      sameSite: "lax",
-      maxAge: SESSION_DURATION,
-      path: "/",
-    });
-
-    return response;
+    return dashboardRedirect(request, result.userId);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return loginRedirect(request, message);
   }
 }
