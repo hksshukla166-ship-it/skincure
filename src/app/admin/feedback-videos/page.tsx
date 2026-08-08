@@ -5,7 +5,7 @@ import FeedbackVideosAdminClient from "./FeedbackVideosAdminClient";
 
 export default async function FeedbackVideosAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
 
   const supabase = createAdminClient();
   const { data } = await supabase.from("feedback_videos").select("*").order("sort_order");

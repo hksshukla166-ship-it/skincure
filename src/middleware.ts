@@ -1,17 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { decodeSessionCookie, SESSION_COOKIE } from "@/lib/session-constants";
+
+function getValidSession(request: NextRequest) {
+  const value = request.cookies.get(SESSION_COOKIE)?.value;
+  if (!value) return null;
+  return decodeSessionCookie(value);
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = request.cookies.get("skin_cure_admin_session");
+  const session = getValidSession(request);
 
-  if (pathname === "/admin/login" && session) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  if (pathname === "/admin/login" || pathname === "/login") {
+    if (session) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+    return NextResponse.next();
   }
 
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+  if (pathname.startsWith("/admin")) {
     if (!session) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
@@ -19,5 +29,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/login"],
 };

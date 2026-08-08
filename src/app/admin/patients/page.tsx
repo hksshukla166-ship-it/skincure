@@ -5,7 +5,7 @@ import PatientsAdminClient from "./PatientsAdminClient";
 
 export default async function PatientsPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
 
   const supabase = createAdminClient();
   const { data: patients, count } = await supabase

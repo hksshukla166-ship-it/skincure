@@ -5,7 +5,7 @@ import BlogsAdminClient from "./BlogsAdminClient";
 
 export default async function BlogsAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
   const supabase = createAdminClient();
   const { data } = await supabase.from("blogs").select("*").order("created_at", { ascending: false });
   return <BlogsAdminClient blogs={data || []} />;

@@ -5,7 +5,7 @@ import BroadcastsAdminClient from "./BroadcastsAdminClient";
 
 export default async function BroadcastsPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
 
   const supabase = createAdminClient();
   const [{ data: broadcasts }, { count: patientCount }] = await Promise.all([

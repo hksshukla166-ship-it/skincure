@@ -5,7 +5,7 @@ import AppointmentsClient from "./AppointmentsClient";
 
 export default async function AppointmentsPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
 
   const appointments = await getAllAppointments();
   return <AppointmentsClient initialAppointments={appointments} />;

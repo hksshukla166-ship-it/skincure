@@ -5,7 +5,7 @@ import SlotsAdminClient from "./SlotsAdminClient";
 
 export default async function SlotsAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
   const supabase = createAdminClient();
   const [{ data: slots }, { data: holidays }] = await Promise.all([
     supabase.from("appointment_slots").select("*").order("sort_order"),

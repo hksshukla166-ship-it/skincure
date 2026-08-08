@@ -20,7 +20,7 @@ export default function AdminError({
             Try again
           </button>
           <a
-            href="/admin/login"
+            href="/login"
             className="px-4 py-2 rounded-xl border border-gray-300 text-primary-900 font-medium hover:bg-gray-50"
           >
             Back to login

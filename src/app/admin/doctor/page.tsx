@@ -5,7 +5,7 @@ import DoctorAdminClient from "./DoctorAdminClient";
 
 export default async function DoctorAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
   const doctor = await getDoctor();
   return <DoctorAdminClient doctor={doctor} />;
 }

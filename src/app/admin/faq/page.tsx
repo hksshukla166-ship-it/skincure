@@ -5,7 +5,7 @@ import FAQAdminClient from "./FAQAdminClient";
 
 export default async function FAQAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
   const supabase = createAdminClient();
   const { data } = await supabase.from("faq").select("*").order("sort_order");
   return <FAQAdminClient faqs={data || []} />;

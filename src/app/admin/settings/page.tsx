@@ -5,7 +5,7 @@ import SettingsAdminClient from "./SettingsAdminClient";
 
 export default async function SettingsAdminPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
   const settings = await getSettings();
   return <SettingsAdminClient settings={settings} />;
 }

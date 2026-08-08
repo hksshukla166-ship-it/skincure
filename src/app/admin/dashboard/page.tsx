@@ -17,7 +17,7 @@ const EMPTY_STATS: DashboardStats = {
 
 export default async function DashboardPage() {
   const session = await getSession();
-  if (!session) redirect("/admin/login");
+  if (!session) redirect("/login");
 
   let stats: DashboardStats = EMPTY_STATS;
   let notifications: Notification[] = [];

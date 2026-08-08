@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { createAdminClient } from "./supabase/admin";
-import { SESSION_COOKIE, SESSION_DURATION } from "./session-constants";
+import { SESSION_COOKIE, SESSION_DURATION, encodeSessionCookie, decodeSessionCookie } from "./session-constants";
 
 export { SESSION_COOKIE, SESSION_DURATION };
 function shouldUseSecureCookies(): boolean {
@@ -26,13 +26,8 @@ export async function verifyPassword(
 
 export async function createSession(userId: string): Promise<void> {
   const cookieStore = await cookies();
-  const sessionData = JSON.stringify({
-    userId,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + SESSION_DURATION * 1000,
-  });
 
-  cookieStore.set(SESSION_COOKIE, Buffer.from(sessionData).toString("base64"), {
+  cookieStore.set(SESSION_COOKIE, encodeSessionCookie(userId), {
     httpOnly: true,
     secure: shouldUseSecureCookies(),
     sameSite: "lax",
@@ -47,20 +42,7 @@ export async function getSession(): Promise<{ userId: string } | null> {
 
   if (!sessionCookie?.value) return null;
 
-  try {
-    const sessionData = JSON.parse(
-      Buffer.from(sessionCookie.value, "base64").toString("utf-8")
-    );
-
-    if (sessionData.expiresAt < Date.now()) {
-      await destroySession();
-      return null;
-    }
-
-    return { userId: sessionData.userId };
-  } catch {
-    return null;
-  }
+  return decodeSessionCookie(sessionCookie.value);
 }
 
 export async function destroySession(): Promise<void> {
