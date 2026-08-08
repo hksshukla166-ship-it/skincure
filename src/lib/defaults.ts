@@ -27,9 +27,10 @@ export const DEFAULT_SETTINGS: Settings = {
 export const DEFAULT_DOCTOR: Doctor = {
   id: "default-doctor",
   name: "Dr. Ajay Pandey",
-  qualification: "MBBS, MD (Dermatology)",
+  qualification: "MBBS DDVL",
   experience: "15+ Years",
-  specialization: "Dermatology / Skin Clinic",
+  specialization: "Consultant Dermatologist",
+  honor_title: "Ex president IADVL CG 2025",
   about:
     "Dr. Ajay Pandey is a renowned dermatologist with over 15 years of experience in treating various skin, hair, and nail conditions. His expertise spans across medical and cosmetic dermatology, providing personalized care to every patient at SKIN CURE clinic in Bilaspur.",
   image_url: null,

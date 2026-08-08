@@ -4,6 +4,7 @@ export interface Doctor {
   qualification: string;
   experience: string;
   specialization: string;
+  honor_title: string | null;
   about: string | null;
   image_url: string | null;
   clinic_timing: string;
@@ -75,6 +76,15 @@ export interface GalleryItem {
   media_url: string;
   media_type: "image" | "video";
   category: "general" | "before_after" | "clinic" | "treatment";
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface FeedbackVideo {
+  id: string;
+  title: string | null;
+  video_url: string;
   sort_order: number;
   is_active: boolean;
   created_at: string;

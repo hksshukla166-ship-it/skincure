@@ -18,9 +18,10 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS doctor (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL DEFAULT 'Dr. Ajay Pandey',
-  qualification TEXT DEFAULT 'MBBS, MD (Dermatology)',
+  qualification TEXT DEFAULT 'MBBS DDVL',
   experience TEXT DEFAULT '15+ Years',
-  specialization TEXT DEFAULT 'Dermatology / Skin Clinic',
+  specialization TEXT DEFAULT 'Consultant Dermatologist',
+  honor_title TEXT DEFAULT 'Ex president IADVL CG 2025',
   about TEXT,
   image_url TEXT,
   clinic_timing TEXT DEFAULT 'Open Daily · Closes at 7 PM',
@@ -75,6 +76,16 @@ CREATE TABLE IF NOT EXISTS gallery (
   media_url TEXT NOT NULL,
   media_type TEXT DEFAULT 'image' CHECK (media_type IN ('image', 'video')),
   category TEXT DEFAULT 'general' CHECK (category IN ('general', 'before_after', 'clinic', 'treatment')),
+  sort_order INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Patient feedback videos (homepage)
+CREATE TABLE IF NOT EXISTS feedback_videos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT,
+  video_url TEXT NOT NULL,
   sort_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -226,6 +237,7 @@ CREATE INDEX IF NOT EXISTS idx_patient_recipients_active ON patient_recipients(i
 CREATE INDEX IF NOT EXISTS idx_patient_recipients_name ON patient_recipients(name);
 CREATE INDEX IF NOT EXISTS idx_broadcast_messages_broadcast ON broadcast_messages(broadcast_id);
 CREATE INDEX IF NOT EXISTS idx_broadcast_messages_status ON broadcast_messages(broadcast_id, status);
+CREATE INDEX IF NOT EXISTS idx_feedback_videos_active ON feedback_videos(is_active);
 CREATE INDEX IF NOT EXISTS idx_gallery_category ON gallery(category);
 CREATE INDEX IF NOT EXISTS idx_blogs_slug ON blogs(slug);
 CREATE INDEX IF NOT EXISTS idx_blogs_published ON blogs(is_published);
@@ -236,6 +248,7 @@ ALTER TABLE doctor ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gallery ENABLE ROW LEVEL SECURITY;
+ALTER TABLE feedback_videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE holiday_schedule ENABLE ROW LEVEL SECURITY;
@@ -257,6 +270,8 @@ DROP POLICY IF EXISTS "Public read active services" ON services;
 CREATE POLICY "Public read active services" ON services FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Public read active gallery" ON gallery;
 CREATE POLICY "Public read active gallery" ON gallery FOR SELECT USING (is_active = true);
+DROP POLICY IF EXISTS "Public read active feedback videos" ON feedback_videos;
+CREATE POLICY "Public read active feedback videos" ON feedback_videos FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Public read visible testimonials" ON testimonials;
 CREATE POLICY "Public read visible testimonials" ON testimonials FOR SELECT USING (is_visible = true);
 DROP POLICY IF EXISTS "Public read active slots" ON appointment_slots;
@@ -283,6 +298,8 @@ DROP POLICY IF EXISTS "Service role all services" ON services;
 CREATE POLICY "Service role all services" ON services FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role all gallery" ON gallery;
 CREATE POLICY "Service role all gallery" ON gallery FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role all feedback_videos" ON feedback_videos;
+CREATE POLICY "Service role all feedback_videos" ON feedback_videos FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role all testimonials" ON testimonials;
 CREATE POLICY "Service role all testimonials" ON testimonials FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role all slots" ON appointment_slots;
@@ -317,9 +334,10 @@ SELECT 'SKIN CURE', '07828093301',
   'Open Daily · Closes at 7 PM'
 WHERE NOT EXISTS (SELECT 1 FROM settings LIMIT 1);
 
-INSERT INTO doctor (name, qualification, experience, specialization, about, clinic_timing)
-SELECT 'Dr. Ajay Pandey', 'MBBS, MD (Dermatology)', '15+ Years', 
-  'Dermatology / Skin Clinic',
+INSERT INTO doctor (name, qualification, experience, specialization, honor_title, about, clinic_timing)
+SELECT 'Dr. Ajay Pandey', 'MBBS DDVL', '15+ Years', 
+  'Consultant Dermatologist',
+  'Ex president IADVL CG 2025',
   'Dr. Ajay Pandey is a renowned dermatologist with over 15 years of experience in treating various skin, hair, and nail conditions. His expertise spans across medical and cosmetic dermatology, providing personalized care to every patient at SKIN CURE clinic in Bilaspur.',
   'Open Daily · Closes at 7 PM'
 WHERE NOT EXISTS (SELECT 1 FROM doctor LIMIT 1);

@@ -5,17 +5,19 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { ServicesSection } from "@/components/home/ServicesSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { PatientFeedbackSection } from "@/components/home/PatientFeedbackSection";
 import { HomeAppointmentHeader, HomeCTASection } from "@/components/home/HomeSections";
 import { AppointmentForm } from "@/components/appointment/AppointmentForm";
-import { getSettings, getDoctor, getServices, getGallery, getTestimonials, incrementVisitorCount } from "@/lib/data";
+import { getSettings, getDoctor, getServices, getGallery, getTestimonials, getFeedbackVideos, incrementVisitorCount } from "@/lib/data";
 
 export default async function HomePage() {
-  const [settings, doctor, services, gallery, testimonials] = await Promise.all([
+  const [settings, doctor, services, gallery, testimonials, feedbackVideos] = await Promise.all([
     getSettings(),
     getDoctor(),
     getServices(),
     getGallery(),
     getTestimonials(),
+    getFeedbackVideos(),
   ]);
 
   try {
@@ -59,6 +61,7 @@ export default async function HomePage() {
         <HeroSection settings={settings} doctor={doctor} />
         <ServicesSection services={services} />
         <GallerySection items={gallery} />
+        <PatientFeedbackSection videos={feedbackVideos} />
         <TestimonialsSection testimonials={testimonials} />
 
         <section className="section-padding bg-gradient-to-b from-white to-primary-50" id="appointment">

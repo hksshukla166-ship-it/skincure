@@ -15,6 +15,7 @@ import type {
   Service,
   GalleryItem,
   Testimonial,
+  FeedbackVideo,
   AppointmentSlot,
   FAQ,
   Blog,
@@ -105,6 +106,20 @@ export async function getTestimonials(): Promise<Testimonial[]> {
     .from("testimonials")
     .select("*")
     .eq("is_visible", true)
+    .order("sort_order");
+
+  if (error && isMissingTableError(error)) return [];
+  return data || [];
+}
+
+export async function getFeedbackVideos(): Promise<FeedbackVideo[]> {
+  const supabase = await getPublicClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("feedback_videos")
+    .select("*")
+    .eq("is_active", true)
     .order("sort_order");
 
   if (error && isMissingTableError(error)) return [];

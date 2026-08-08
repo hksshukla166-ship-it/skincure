@@ -138,8 +138,11 @@ export function HeroSection({ settings, doctor }: HeroSectionProps) {
 
               <div className="text-center">
                 <h3 className="font-display text-2xl font-bold text-primary-900">{doctorName}</h3>
-                <p className="text-gold-600 font-medium">{doctor?.specialization || "Dermatology / Skin Clinic"}</p>
-                <p className="text-primary-600 mt-2">{doctor?.qualification || "MBBS, MD (Dermatology)"}</p>
+                <p className="text-gold-600 font-medium">{doctor?.specialization || "Consultant Dermatologist"}</p>
+                <p className="text-primary-600 mt-2">{doctor?.qualification || "MBBS DDVL"}</p>
+                {(doctor?.honor_title || "Ex president IADVL CG 2025") && (
+                  <p className="text-primary-500 text-sm mt-1 font-medium">{doctor?.honor_title || "Ex president IADVL CG 2025"}</p>
+                )}
                 <div className="flex items-center justify-center gap-1 mt-3">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-gold-500 fill-current" />

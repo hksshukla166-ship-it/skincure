@@ -236,6 +236,7 @@ export async function updateDoctor(formData: FormData) {
     qualification: sanitizeText(formData.get("qualification") as string),
     experience: sanitizeText(formData.get("experience") as string),
     specialization: sanitizeText(formData.get("specialization") as string),
+    honor_title: sanitizeText(formData.get("honor_title") as string) || null,
     about: sanitizeText(formData.get("about") as string),
     clinic_timing: sanitizeText(formData.get("clinic_timing") as string),
     image_url: formData.get("image_url") as string || null,
@@ -340,6 +341,30 @@ export async function manageGallery(action: "create" | "update" | "delete", data
 
   revalidatePath("/");
   revalidatePath("/gallery");
+  return { success: true };
+}
+
+export async function manageFeedbackVideo(action: "create" | "update" | "delete", data: Record<string, unknown>) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  if (action === "create") {
+    await supabase.from("feedback_videos").insert({
+      title: sanitizeText(data.title as string) || null,
+      video_url: data.video_url as string,
+      sort_order: data.sort_order as number || 0,
+    });
+  } else if (action === "update") {
+    await supabase.from("feedback_videos").update({
+      title: sanitizeText(data.title as string) || null,
+      is_active: data.is_active as boolean,
+      sort_order: data.sort_order as number,
+    }).eq("id", data.id as string);
+  } else if (action === "delete") {
+    await supabase.from("feedback_videos").delete().eq("id", data.id as string);
+  }
+
+  revalidatePath("/");
   return { success: true };
 }
 

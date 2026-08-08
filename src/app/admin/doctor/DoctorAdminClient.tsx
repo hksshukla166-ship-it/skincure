@@ -48,6 +48,10 @@ export default function DoctorAdminClient({ doctor }: { doctor: Doctor | null })
             <label className="block text-sm font-medium mb-1">Specialization</label>
             <input name="specialization" defaultValue={doctor?.specialization} className="w-full px-4 py-2 rounded-xl border" />
           </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium mb-1">Honor / Title (shown below qualification on homepage)</label>
+            <input name="honor_title" defaultValue={doctor?.honor_title || "Ex president IADVL CG 2025"} className="w-full px-4 py-2 rounded-xl border" />
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Clinic Timing</label>
