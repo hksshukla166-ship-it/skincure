@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { loginAction } from "@/lib/actions";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { toast } from "sonner";
@@ -14,19 +13,28 @@ export default function AdminLoginClient() {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const formData = new FormData(e.currentTarget);
-      const result = await loginAction(formData);
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
 
-      if (result?.error) {
-        toast.error(result.error);
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.error) {
+        toast.error(data.error || "Login failed. Please try again.");
         setLoading(false);
         return;
       }
 
       window.location.href = "/admin/dashboard";
     } catch {
-      toast.error("Login failed. Please try again.");
+      toast.error("Could not reach the server. Restart the site and try again.");
       setLoading(false);
     }
   };

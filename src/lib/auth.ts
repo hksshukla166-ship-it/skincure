@@ -5,6 +5,8 @@ import { createAdminClient } from "./supabase/admin";
 const SESSION_COOKIE = "skin_cure_admin_session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days
 
+export { SESSION_COOKIE, SESSION_DURATION };
+
 function shouldUseSecureCookies(): boolean {
   if (process.env.COOKIE_SECURE === "true") return true;
   if (process.env.COOKIE_SECURE === "false") return false;
