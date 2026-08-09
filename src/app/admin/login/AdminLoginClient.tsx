@@ -4,7 +4,11 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Lock } from "lucide-react";
 
-function LoginForm() {
+type LoginFormProps = {
+  loginAction: (formData: FormData) => Promise<void>;
+};
+
+function LoginForm({ loginAction }: LoginFormProps) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
@@ -25,7 +29,7 @@ function LoginForm() {
           </div>
         )}
 
-        <form action="/api/admin/login" method="POST" className="space-y-5">
+        <form action={loginAction} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-primary-200 mb-1">Username</label>
             <input
@@ -59,10 +63,10 @@ function LoginForm() {
   );
 }
 
-export default function AdminLoginClient() {
+export default function AdminLoginClient({ loginAction }: LoginFormProps) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-primary-900" />}>
-      <LoginForm />
+      <LoginForm loginAction={loginAction} />
     </Suspense>
   );
 }

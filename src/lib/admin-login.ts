@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashPassword, initializeAdmin, verifyPassword } from "@/lib/auth";
+import { getAdminPassword } from "@/lib/env-config";
 import { sanitizeText } from "@/lib/sanitize";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -48,7 +49,7 @@ export async function authenticateAdmin(
       ? await verifyPassword(cleanPassword, profile.password_hash)
       : false;
 
-    const expectedPassword = process.env.ADMIN_PASSWORD || "SAskinCare134@1";
+    const expectedPassword = getAdminPassword();
     if (!isValid && cleanPassword === expectedPassword) {
       const passwordHash = await hashPassword(cleanPassword);
       await supabase

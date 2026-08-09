@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { getAdminPassword } from "./env-config";
 import { createAdminClient } from "./supabase/admin";
 import { SESSION_COOKIE, SESSION_DURATION, encodeSessionCookie, decodeSessionCookie } from "./session-constants";
-
 export { SESSION_COOKIE, SESSION_DURATION };
 function shouldUseSecureCookies(): boolean {
   if (process.env.COOKIE_SECURE === "true") return true;
@@ -74,7 +74,7 @@ export async function initializeAdmin(): Promise<void> {
   try {
     const supabase = createAdminClient();
     const username = process.env.ADMIN_USERNAME || "ASkiNcare";
-    const password = process.env.ADMIN_PASSWORD || "SAskinCare134@1";
+    const password = getAdminPassword();
 
     const { data: existing, error } = await supabase
       .from("profiles")

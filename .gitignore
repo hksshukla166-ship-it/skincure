@@ -23,7 +23,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# env files
+# env files (keep .env.production for live server deploy)
 .env
 .env*.local
 
