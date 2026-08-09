@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, User, Phone, MessageSquare, Loader2 } from "lucide-react";
+import { Calendar, Clock, User, Phone, MessageSquare, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { bookAppointment } from "@/lib/actions";
@@ -10,6 +10,11 @@ import { generateWhatsAppMessage, getWhatsAppUrl, formatDate } from "@/lib/utils
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Settings } from "@/types";
+
+const TIME_OPTIONS = [
+  { value: "Morning", labelKey: "morning" as const, icon: Sun },
+  { value: "Evening", labelKey: "evening" as const, icon: Moon },
+];
 
 interface AppointmentFormProps {
   settings: Settings | null;
@@ -26,28 +31,16 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
     preferred_date: "",
     slot_time: "",
   });
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (formData.preferred_date) {
-      setLoadingSlots(true);
-      fetch(`/api/slots?date=${formData.preferred_date}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setAvailableSlots(data.slots || []);
-          setFormData((prev) => ({ ...prev, slot_time: "" }));
-        })
-        .catch(() => setAvailableSlots([]))
-        .finally(() => setLoadingSlots(false));
-    }
-  }, [formData.preferred_date]);
 
   const minDate = new Date().toISOString().split("T")[0];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.slot_time) {
+      toast.error("Please select Morning or Evening");
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -73,7 +66,7 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
       });
 
       toast.success("Appointment booked! Opening WhatsApp to confirm...");
-      
+
       setTimeout(() => {
         window.open(getWhatsAppUrl(whatsappNumber, message), "_blank");
       }, 1000);
@@ -174,48 +167,43 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-primary-700 mb-1">
-              <Calendar className="w-4 h-4 inline mr-1" /> {tr("appointment.preferredDate")} *
-            </label>
-            <input
-              type="date"
-              required
-              min={minDate}
-              value={formData.preferred_date}
-              onChange={(e) => setFormData({ ...formData, preferred_date: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-primary-700 mb-1">
-              <Clock className="w-4 h-4 inline mr-1" /> {tr("appointment.timeSlot")} *
-            </label>
-            {loadingSlots ? (
-              <div className="flex items-center gap-2 px-4 py-3 text-primary-600">
-                <Loader2 className="w-4 h-4 animate-spin" /> ...
-              </div>
-            ) : (
-              <select
-                required
-                value={formData.slot_time}
-                onChange={(e) => setFormData({ ...formData, slot_time: e.target.value })}
-                disabled={!formData.preferred_date || availableSlots.length === 0}
-                className="w-full px-4 py-3 rounded-xl border border-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80 disabled:opacity-50"
-              >
-                <option value="">
-                  {!formData.preferred_date
-                    ? tr("appointment.selectDateFirst")
-                    : availableSlots.length === 0
-                    ? tr("appointment.noSlots")
-                    : tr("appointment.selectSlot")}
-                </option>
-                {availableSlots.map((slot) => (
-                  <option key={slot} value={slot}>{slot}</option>
-                ))}
-              </select>
-            )}
+        <div>
+          <label className="block text-sm font-medium text-primary-700 mb-1">
+            <Calendar className="w-4 h-4 inline mr-1" /> {tr("appointment.preferredDate")} *
+          </label>
+          <input
+            type="date"
+            required
+            min={minDate}
+            value={formData.preferred_date}
+            onChange={(e) => setFormData({ ...formData, preferred_date: e.target.value })}
+            className="w-full px-4 py-3 rounded-xl border border-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/80"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-primary-700 mb-2">
+            <Clock className="w-4 h-4 inline mr-1" /> {tr("appointment.preferredTime")} *
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {TIME_OPTIONS.map(({ value, labelKey, icon: Icon }) => {
+              const selected = formData.slot_time === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, slot_time: value })}
+                  className={`flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 font-medium transition-all ${
+                    selected
+                      ? "border-gold-500 bg-gold-50 text-primary-900 shadow-sm"
+                      : "border-primary-200 bg-white/80 text-primary-700 hover:border-primary-300"
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${selected ? "text-gold-600" : "text-primary-500"}`} />
+                  {tr(`appointment.${labelKey}`)}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -226,12 +214,18 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
             className="p-4 rounded-xl bg-primary-50 border border-primary-100"
           >
             <p className="text-sm text-primary-700">
-              <strong>{tr("appointment.selected")}:</strong> {formatDate(formData.preferred_date)} at {formData.slot_time}
+              <strong>{tr("appointment.selected")}:</strong> {formatDate(formData.preferred_date)} — {formData.slot_time}
             </p>
           </motion.div>
         )}
 
-        <Button type="submit" variant="gold" size="lg" className="w-full" disabled={submitting}>
+        <Button
+          type="submit"
+          variant="gold"
+          size="lg"
+          className="w-full"
+          disabled={submitting || !formData.slot_time}
+        >
           {submitting ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />

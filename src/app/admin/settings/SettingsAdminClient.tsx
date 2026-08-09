@@ -53,6 +53,42 @@ export default function SettingsAdminClient({ settings }: { settings: Settings |
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
+        <h3 className="font-semibold">Homepage Hero Title</h3>
+        <p className="text-sm text-gray-500">
+          Three lines shown at the top of the homepage (same as &quot;Premium / Skin Care / You Deserve&quot;).
+        </p>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Line 1 (highlight)</label>
+            <input
+              name="hero_title_line1"
+              defaultValue={settings?.hero_title_line1 ?? "Premium"}
+              placeholder="Premium"
+              className="w-full px-4 py-2 rounded-xl border"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Line 2</label>
+            <input
+              name="hero_title_line2"
+              defaultValue={settings?.hero_title_line2 ?? "Skin Care"}
+              placeholder="Skin Care"
+              className="w-full px-4 py-2 rounded-xl border"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Line 3 (accent)</label>
+            <input
+              name="hero_title_line3"
+              defaultValue={settings?.hero_title_line3 ?? "You Deserve"}
+              placeholder="You Deserve"
+              className="w-full px-4 py-2 rounded-xl border"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Clinic Name</label>

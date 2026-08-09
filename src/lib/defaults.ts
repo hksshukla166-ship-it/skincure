@@ -20,6 +20,9 @@ export const DEFAULT_SETTINGS: Settings = {
   max_patients_per_day: 50,
   patient_counter: 5000,
   site_url: null,
+  hero_title_line1: "Premium",
+  hero_title_line2: "Skin Care",
+  hero_title_line3: "You Deserve",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

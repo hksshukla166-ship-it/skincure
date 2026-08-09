@@ -22,6 +22,9 @@ export function HeroSection({ settings, doctor }: HeroSectionProps) {
   const whatsapp = settings?.whatsapp_number || "917828093301";
   const phone = settings?.phone || "07828093301";
   const doctorName = doctor?.name || "Dr. Ajay Pandey";
+  const heroLine1 = settings?.hero_title_line1?.trim() || tr("hero.premium");
+  const heroLine2 = settings?.hero_title_line2?.trim() || tr("hero.skinCare");
+  const heroLine3 = settings?.hero_title_line3?.trim() || tr("hero.youDeserve");
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -52,11 +55,11 @@ export function HeroSection({ settings, doctor }: HeroSectionProps) {
             </div>
 
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              <span className="gradient-text">{tr("hero.premium")}</span>
+              <span className="gradient-text">{heroLine1}</span>
               <br />
-              <span className="text-primary-900">{tr("hero.skinCare")}</span>
+              <span className="text-primary-900">{heroLine2}</span>
               <br />
-              <span className="text-gold-600">{tr("hero.youDeserve")}</span>
+              <span className="text-gold-600">{heroLine3}</span>
             </h1>
 
             <p className="text-lg text-primary-700 mb-8 max-w-lg leading-relaxed">

@@ -123,7 +123,7 @@ export async function bookAppointment(data: AppointmentFormData) {
     .single();
 
   if (existingBooking) {
-    return { error: "This time slot is no longer available" };
+    return { error: "This time preference is already booked for the selected date" };
   }
 
   const { count: dayCount } = await supabase
@@ -304,6 +304,9 @@ export async function updateSettings(formData: FormData) {
     holiday_mode: formData.get("holiday_mode") === "true",
     max_patients_per_day: parseInt(formData.get("max_patients_per_day") as string) || 50,
     patient_counter: parseInt(formData.get("patient_counter") as string) || 5000,
+    hero_title_line1: sanitizeText(formData.get("hero_title_line1") as string) || "Premium",
+    hero_title_line2: sanitizeText(formData.get("hero_title_line2") as string) || "Skin Care",
+    hero_title_line3: sanitizeText(formData.get("hero_title_line3") as string) || "You Deserve",
     updated_at: new Date().toISOString(),
   };
 

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Phone, MessageCircle, Calendar } from "lucide-react";
+import { Phone, MessageCircle } from "lucide-react";
 import { getWhatsAppUrl, getCallUrl } from "@/lib/utils";
 import type { Settings } from "@/types";
 
@@ -18,13 +17,6 @@ export function StickyButtons({ settings }: StickyButtonsProps) {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-      <Link
-        href="/appointment"
-        className="w-14 h-14 rounded-full bg-gradient-to-r from-gold-600 to-gold-400 text-white shadow-gold flex items-center justify-center hover:scale-110 transition-transform animate-float"
-        aria-label="Book appointment"
-      >
-        <Calendar className="w-6 h-6" />
-      </Link>
       <a
         href={whatsappUrl}
         target="_blank"

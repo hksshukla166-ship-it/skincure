@@ -8,7 +8,7 @@ import { getSettings } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Book Appointment",
-  description: "Book your dermatology appointment at SKIN CURE clinic Bilaspur. Select date and time slot online.",
+  description: "Book your dermatology appointment at SKIN CURE clinic Bilaspur. Choose morning or evening slot online.",
 };
 
 export default async function AppointmentPage() {
@@ -26,7 +26,7 @@ export default async function AppointmentPage() {
                 Book Your Consultation
               </h1>
               <p className="text-primary-600 max-w-xl mx-auto">
-                Select your preferred date and time. Confirmation via WhatsApp.
+                Select your preferred date and choose Morning or Evening. Confirmation via WhatsApp.
               </p>
             </AnimatedSection>
             <AppointmentForm settings={settings} />

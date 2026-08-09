@@ -48,7 +48,7 @@ Gender: ${data.gender}
 Phone: ${data.phone}
 Problem: ${data.problem}
 Preferred Date: ${formattedDate}
-Selected Time: ${data.slot_time}
+Preferred Time: ${data.slot_time}
 
 Please confirm my appointment.`;
 }

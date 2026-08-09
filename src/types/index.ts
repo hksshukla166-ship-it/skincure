@@ -46,6 +46,9 @@ export interface Settings {
   max_patients_per_day: number;
   patient_counter: number;
   site_url: string | null;
+  hero_title_line1: string | null;
+  hero_title_line2: string | null;
+  hero_title_line3: string | null;
   created_at: string;
   updated_at: string;
 }
