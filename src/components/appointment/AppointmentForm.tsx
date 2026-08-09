@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Calendar, Clock, User, Phone, MessageSquare, Loader2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { bookAppointment } from "@/lib/actions";
 import { generateWhatsAppMessage, getWhatsAppUrl, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -44,13 +43,19 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
     setSubmitting(true);
 
     try {
-      const result = await bookAppointment({
-        ...formData,
-        age: parseInt(formData.age),
+      const response = await fetch("/api/appointments/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          age: parseInt(formData.age, 10),
+        }),
       });
 
-      if (result.error) {
-        toast.error(result.error);
+      const result = (await response.json()) as { success?: boolean; error?: string };
+
+      if (!response.ok || result.error) {
+        toast.error(result.error || "Failed to book appointment. Please try again.");
         return;
       }
 
@@ -80,8 +85,9 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
         preferred_date: "",
         slot_time: "",
       });
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

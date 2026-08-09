@@ -81,92 +81,17 @@ export async function logoutAction() {
 }
 
 export async function bookAppointment(data: AppointmentFormData) {
-  const supabase = createAdminClient();
+  const { bookAppointmentRequest } = await import("@/lib/book-appointment");
+  const result = await bookAppointmentRequest(data);
 
-  const patient_name = sanitizeText(data.patient_name);
-  const phone = sanitizePhone(data.phone);
-  const problem = sanitizeText(data.problem);
-  const gender = data.gender;
-  const age = Number(data.age);
-  const preferred_date = data.preferred_date;
-  const slot_time = data.slot_time;
-
-  if (!patient_name || !phone || !problem || !preferred_date || !slot_time) {
-    return { error: "All fields are required" };
+  if ("error" in result) {
+    return { error: result.error };
   }
-
-  if (age < 1 || age > 120) {
-    return { error: "Please enter a valid age" };
-  }
-
-  const { data: holiday } = await supabase
-    .from("holiday_schedule")
-    .select("*")
-    .eq("date", preferred_date)
-    .single();
-
-  if (holiday?.is_closed) {
-    return { error: "Clinic is closed on the selected date" };
-  }
-
-  const { data: settings } = await supabase.from("settings").select("holiday_mode, max_patients_per_day").single();
-
-  if (settings?.holiday_mode) {
-    return { error: "Clinic is currently in holiday mode. Please try again later." };
-  }
-
-  const { data: existingBooking } = await supabase
-    .from("appointments")
-    .select("id")
-    .eq("preferred_date", preferred_date)
-    .eq("slot_time", slot_time)
-    .not("status", "in", '("cancelled","rejected")')
-    .single();
-
-  if (existingBooking) {
-    return { error: "This time preference is already booked for the selected date" };
-  }
-
-  const { count: dayCount } = await supabase
-    .from("appointments")
-    .select("*", { count: "exact", head: true })
-    .eq("preferred_date", preferred_date)
-    .not("status", "in", '("cancelled","rejected")');
-
-  if (dayCount && settings?.max_patients_per_day && dayCount >= settings.max_patients_per_day) {
-    return { error: "Maximum appointments reached for this date" };
-  }
-
-  const { data: appointment, error } = await supabase
-    .from("appointments")
-    .insert({
-      patient_name,
-      age,
-      gender,
-      phone,
-      problem,
-      preferred_date,
-      slot_time,
-      status: "pending",
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return { error: "Failed to book appointment. Please try again." };
-  }
-
-  await supabase.from("notifications").insert({
-    type: "new_booking",
-    title: "New Appointment Booking",
-    message: `${patient_name} booked for ${preferred_date} at ${slot_time}`,
-    reference_id: appointment.id,
-  });
 
   revalidatePath("/");
   revalidatePath("/admin/appointments");
 
-  return { success: true, appointment };
+  return { success: true };
 }
 
 export async function updateAppointmentStatus(
