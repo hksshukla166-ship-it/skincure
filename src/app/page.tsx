@@ -10,16 +10,30 @@ import { HomeAppointmentHeader, HomeCTASection } from "@/components/home/HomeSec
 import { HomeMapSection } from "@/components/home/HomeMapSection";
 import { AppointmentForm } from "@/components/appointment/AppointmentForm";
 import { getSettings, getDoctor, getServices, getGallery, getTestimonials, getFeedbackVideos, incrementVisitorCount } from "@/lib/data";
+import { getSiteUrl } from "@/lib/env-config";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [settings, doctor, services, gallery, testimonials, feedbackVideos] = await Promise.all([
-    getSettings(),
-    getDoctor(),
-    getServices(),
-    getGallery(),
-    getTestimonials(),
-    getFeedbackVideos(),
-  ]);
+  let settings = null;
+  let doctor = null;
+  let services: Awaited<ReturnType<typeof getServices>> = [];
+  let gallery: Awaited<ReturnType<typeof getGallery>> = [];
+  let testimonials: Awaited<ReturnType<typeof getTestimonials>> = [];
+  let feedbackVideos: Awaited<ReturnType<typeof getFeedbackVideos>> = [];
+
+  try {
+    [settings, doctor, services, gallery, testimonials, feedbackVideos] = await Promise.all([
+      getSettings(),
+      getDoctor(),
+      getServices(),
+      getGallery(),
+      getTestimonials(),
+      getFeedbackVideos(),
+    ]);
+  } catch {
+    // Keep homepage online even if Supabase is temporarily unavailable.
+  }
 
   try {
     await incrementVisitorCount();
@@ -32,7 +46,7 @@ export default async function HomePage() {
     "@type": "MedicalBusiness",
     name: settings?.clinic_name || "SKIN CURE",
     description: "Premium dermatology clinic in Bilaspur",
-    url: process.env.NEXT_PUBLIC_SITE_URL,
+    url: getSiteUrl(),
     telephone: settings?.phone || "07828093301",
     address: {
       "@type": "PostalAddress",

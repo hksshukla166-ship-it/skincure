@@ -6,13 +6,9 @@ import {
   getPublicSupabaseUrl,
   getServiceRoleKey,
   getSiteUrl,
+  shouldUseSecureCookies,
 } from "@/lib/env-config";
-import {
-  SESSION_COOKIE,
-  SESSION_DURATION,
-  encodeSessionCookie,
-  buildSessionSetCookieHeader,
-} from "@/lib/session-constants";
+import { buildSessionSetCookieHeader } from "@/lib/session-constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +26,7 @@ function redirectTo(request: NextRequest, path: string, userId?: string) {
   const url = new URL(path, originFromRequest(request));
   const headers = new Headers({ Location: url.toString() });
   if (userId) {
-    const secure = originFromRequest(request).startsWith("https://");
+    const secure = shouldUseSecureCookies() || originFromRequest(request).startsWith("https://");
     headers.set("Set-Cookie", buildSessionSetCookieHeader(userId, secure));
   }
   return new NextResponse(null, { status: 303, headers });

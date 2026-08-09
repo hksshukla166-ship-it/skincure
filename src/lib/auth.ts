@@ -1,17 +1,9 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { getAdminPassword } from "./env-config";
+import { getAdminPassword, shouldUseSecureCookies } from "./env-config";
 import { createAdminClient } from "./supabase/admin";
 import { SESSION_COOKIE, SESSION_DURATION, encodeSessionCookie, decodeSessionCookie } from "./session-constants";
 export { SESSION_COOKIE, SESSION_DURATION };
-function shouldUseSecureCookies(): boolean {
-  if (process.env.COOKIE_SECURE === "true") return true;
-  if (process.env.COOKIE_SECURE === "false") return false;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || "";
-  if (siteUrl.startsWith("http://")) return false;
-  if (siteUrl.includes("localhost")) return false;
-  return true;
-}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);

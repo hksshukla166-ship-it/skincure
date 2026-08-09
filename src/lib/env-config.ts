@@ -1,8 +1,5 @@
 /**
- * Production-safe env access.
- * Public values have fallbacks so the live site keeps working even if
- * the host does not inject environment variables correctly.
- * Server-only secrets are read from process.env first, then .env.production.
+ * Production-safe env access with fallbacks when hosting misconfigures .env files.
  */
 
 const DEFAULTS = {
@@ -16,8 +13,26 @@ const DEFAULTS = {
   NEXT_PUBLIC_SITE_URL: "https://skincurebilaspur.in",
 } as const;
 
+function isProduction(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+function isBadProductionSiteUrl(value: string): boolean {
+  return value.includes("localhost") || value.startsWith("http://");
+}
+
 function readEnv(name: keyof typeof DEFAULTS): string {
-  return process.env[name] || DEFAULTS[name];
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    return DEFAULTS[name];
+  }
+
+  if (isProduction() && name === "NEXT_PUBLIC_SITE_URL" && isBadProductionSiteUrl(value)) {
+    return DEFAULTS[name];
+  }
+
+  return value;
 }
 
 export function getPublicSupabaseUrl(): string {
@@ -44,15 +59,22 @@ export function getSiteUrl(): string {
   return readEnv("NEXT_PUBLIC_SITE_URL");
 }
 
+export function shouldUseSecureCookies(): boolean {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+  return getSiteUrl().startsWith("https://");
+}
+
 export function isSupabaseConfigured(): boolean {
   return Boolean(getPublicSupabaseUrl() && getServiceRoleKey());
 }
 
 export function getEnvDiagnostics() {
   return {
-    supabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-    serviceKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    supabaseUrl: Boolean(getPublicSupabaseUrl()),
+    serviceKey: Boolean(getServiceRoleKey()),
     siteUrl: getSiteUrl(),
     nodeEnv: process.env.NODE_ENV || "unknown",
+    rawSiteUrl: process.env.NEXT_PUBLIC_SITE_URL || null,
   };
 }
