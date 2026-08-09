@@ -9,6 +9,7 @@ import { sanitizeText, sanitizePhone } from "@/lib/sanitize";
 import { slugify } from "@/lib/utils";
 import { chunkArray, normalizeWhatsAppPhone, renderBroadcastMessage, type PatientImportRow } from "@/lib/broadcast-utils";
 import { isWhatsAppCloudConfigured, sendWhatsAppTextMessage } from "@/lib/whatsapp-cloud";
+import { DEFAULT_HERO_HEADLINE } from "@/lib/defaults";
 import type { AppointmentFormData } from "@/types";
 
 export async function loginAction(formData: FormData) {
@@ -304,16 +305,39 @@ export async function updateSettings(formData: FormData) {
     holiday_mode: formData.get("holiday_mode") === "true",
     max_patients_per_day: parseInt(formData.get("max_patients_per_day") as string) || 50,
     patient_counter: parseInt(formData.get("patient_counter") as string) || 5000,
-    hero_title_line1: sanitizeText(formData.get("hero_title_line1") as string) || "Premium",
-    hero_title_line2: sanitizeText(formData.get("hero_title_line2") as string) || "Skin Care",
-    hero_title_line3: sanitizeText(formData.get("hero_title_line3") as string) || "You Deserve",
+    hero_title_line1: sanitizeText(formData.get("hero_title_line1") as string) || DEFAULT_HERO_HEADLINE.line1,
+    hero_title_line2: sanitizeText(formData.get("hero_title_line2") as string) || DEFAULT_HERO_HEADLINE.line2,
+    hero_title_line3: sanitizeText(formData.get("hero_title_line3") as string) || DEFAULT_HERO_HEADLINE.line3,
     updated_at: new Date().toISOString(),
   };
 
+  const {
+    hero_title_line1,
+    hero_title_line2,
+    hero_title_line3,
+    ...baseUpdate
+  } = updateData;
+
   if (existing) {
-    await supabase.from("settings").update(updateData).eq("id", existing.id);
+    const { error } = await supabase.from("settings").update(updateData).eq("id", existing.id);
+    if (error?.message?.includes("hero_title")) {
+      const { error: retryError } = await supabase.from("settings").update(baseUpdate).eq("id", existing.id);
+      if (retryError) return { error: retryError.message };
+      return {
+        error: "Hero title columns missing in database. Run the SQL migration in Supabase, then save again.",
+      };
+    }
+    if (error) return { error: error.message };
   } else {
-    await supabase.from("settings").insert(updateData);
+    const { error } = await supabase.from("settings").insert(updateData);
+    if (error?.message?.includes("hero_title")) {
+      const { error: retryError } = await supabase.from("settings").insert(baseUpdate);
+      if (retryError) return { error: retryError.message };
+      return {
+        error: "Hero title columns missing in database. Run the SQL migration in Supabase, then save again.",
+      };
+    }
+    if (error) return { error: error.message };
   }
 
   revalidatePath("/");

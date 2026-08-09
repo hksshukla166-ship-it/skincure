@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS settings (
   max_patients_per_day INTEGER DEFAULT 50,
   patient_counter INTEGER DEFAULT 5000,
   site_url TEXT,
-  hero_title_line1 TEXT DEFAULT 'Premium',
-  hero_title_line2 TEXT DEFAULT 'Skin Care',
-  hero_title_line3 TEXT DEFAULT 'You Deserve',
+  hero_title_line1 TEXT DEFAULT 'Skincure',
+  hero_title_line2 TEXT DEFAULT 'Center for excellence in applied Dermatology & Lasers',
+  hero_title_line3 TEXT DEFAULT 'Wast experience in genital disease',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

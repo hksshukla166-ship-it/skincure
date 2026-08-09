@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getWhatsAppUrl, getCallUrl } from "@/lib/utils";
 import Hero3D from "@/components/3d/Hero3D";
 import type { Settings, Doctor } from "@/types";
+import { DEFAULT_HERO_HEADLINE } from "@/lib/defaults";
 
 interface HeroSectionProps {
   settings: Settings | null;
@@ -22,9 +23,9 @@ export function HeroSection({ settings, doctor }: HeroSectionProps) {
   const whatsapp = settings?.whatsapp_number || "917828093301";
   const phone = settings?.phone || "07828093301";
   const doctorName = doctor?.name || "Dr. Ajay Pandey";
-  const heroLine1 = settings?.hero_title_line1?.trim() || tr("hero.premium");
-  const heroLine2 = settings?.hero_title_line2?.trim() || tr("hero.skinCare");
-  const heroLine3 = settings?.hero_title_line3?.trim() || tr("hero.youDeserve");
+  const heroLine1 = settings?.hero_title_line1?.trim() || DEFAULT_HERO_HEADLINE.line1;
+  const heroLine2 = settings?.hero_title_line2?.trim() || DEFAULT_HERO_HEADLINE.line2;
+  const heroLine3 = settings?.hero_title_line3?.trim() || DEFAULT_HERO_HEADLINE.line3;
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -54,13 +55,13 @@ export function HeroSection({ settings, doctor }: HeroSectionProps) {
               </div>
             </div>
 
-            <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              <span className="gradient-text">{heroLine1}</span>
-              <br />
-              <span className="text-primary-900">{heroLine2}</span>
-              <br />
-              <span className="text-gold-600">{heroLine3}</span>
-            </h1>
+            <div className="max-w-2xl mb-6">
+              <h1 className="font-display font-bold leading-tight">
+                <span className="block text-4xl md:text-5xl lg:text-6xl gradient-text mb-3">{heroLine1}</span>
+                <span className="block text-xl md:text-2xl lg:text-3xl text-primary-900">{heroLine2}</span>
+              </h1>
+              <p className="mt-4 text-lg md:text-xl text-gold-600 font-semibold">{heroLine3}</p>
+            </div>
 
             <p className="text-lg text-primary-700 mb-8 max-w-lg leading-relaxed">
               {tr("hero.subtitle", { doctor: doctorName })}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { FileUpload } from "@/components/admin/FileUpload";
 import { toast } from "sonner";
 import { Loader2, Database } from "lucide-react";
+import { DEFAULT_HERO_HEADLINE } from "@/lib/defaults";
 import type { Settings } from "@/types";
 
 export default function SettingsAdminClient({ settings }: { settings: Settings | null }) {
@@ -32,7 +33,7 @@ export default function SettingsAdminClient({ settings }: { settings: Settings |
     formData.set("logo_url", logoUrl);
     const result = await updateSettings(formData);
     if (result.success) toast.success("Settings updated!");
-    else toast.error("Failed to update");
+    else toast.error(result.error || "Failed to update");
     setLoading(false);
   };
 
@@ -55,33 +56,33 @@ export default function SettingsAdminClient({ settings }: { settings: Settings |
       <div className="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
         <h3 className="font-semibold">Homepage Hero Title</h3>
         <p className="text-sm text-gray-500">
-          Three lines shown at the top of the homepage (same as &quot;Premium / Skin Care / You Deserve&quot;).
+          Main headline and tagline on the homepage hero section.
         </p>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Line 1 (highlight)</label>
+            <label className="block text-sm font-medium mb-1">Brand name (large highlight)</label>
             <input
               name="hero_title_line1"
-              defaultValue={settings?.hero_title_line1 ?? "Premium"}
-              placeholder="Premium"
+              defaultValue={settings?.hero_title_line1 ?? DEFAULT_HERO_HEADLINE.line1}
+              placeholder={DEFAULT_HERO_HEADLINE.line1}
               className="w-full px-4 py-2 rounded-xl border"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Line 2</label>
+            <label className="block text-sm font-medium mb-1">Main headline</label>
             <input
               name="hero_title_line2"
-              defaultValue={settings?.hero_title_line2 ?? "Skin Care"}
-              placeholder="Skin Care"
+              defaultValue={settings?.hero_title_line2 ?? DEFAULT_HERO_HEADLINE.line2}
+              placeholder={DEFAULT_HERO_HEADLINE.line2}
               className="w-full px-4 py-2 rounded-xl border"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Line 3 (accent)</label>
+            <label className="block text-sm font-medium mb-1">Tagline (below headline)</label>
             <input
               name="hero_title_line3"
-              defaultValue={settings?.hero_title_line3 ?? "You Deserve"}
-              placeholder="You Deserve"
+              defaultValue={settings?.hero_title_line3 ?? DEFAULT_HERO_HEADLINE.line3}
+              placeholder={DEFAULT_HERO_HEADLINE.line3}
               className="w-full px-4 py-2 rounded-xl border"
             />
           </div>

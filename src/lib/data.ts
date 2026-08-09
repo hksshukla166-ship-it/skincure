@@ -50,9 +50,31 @@ export async function getSettings(): Promise<Settings | null> {
   const { data, error } = await supabase.from("settings").select("*").single();
   if (error) {
     if (isMissingTableError(error)) return DEFAULT_SETTINGS;
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...data, ...mergeHeroFromDefaults(data) };
   }
-  return data ?? DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...data, ...mergeHeroFromDefaults(data) };
+}
+
+function mergeHeroFromDefaults(data: Partial<Settings> | null | undefined) {
+  const line1 = data?.hero_title_line1?.trim();
+  const line2 = data?.hero_title_line2?.trim();
+  const line3 = data?.hero_title_line3?.trim();
+  const isLegacyTitle =
+    line1 === "Premium" && line2 === "Skin Care" && line3 === "You Deserve";
+
+  if (!line1 || !line2 || !line3 || isLegacyTitle) {
+    return {
+      hero_title_line1: DEFAULT_SETTINGS.hero_title_line1,
+      hero_title_line2: DEFAULT_SETTINGS.hero_title_line2,
+      hero_title_line3: DEFAULT_SETTINGS.hero_title_line3,
+    };
+  }
+
+  return {
+    hero_title_line1: line1,
+    hero_title_line2: line2,
+    hero_title_line3: line3,
+  };
 }
 
 export async function getDoctor(): Promise<Doctor | null> {

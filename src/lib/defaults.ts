@@ -1,5 +1,11 @@
 import type { Settings, Doctor, Service, FAQ, AppointmentSlot } from "@/types";
 
+export const DEFAULT_HERO_HEADLINE = {
+  line1: "Skincure",
+  line2: "Center for excellence in applied Dermatology & Lasers",
+  line3: "Wast experience in genital disease",
+} as const;
+
 export const DEFAULT_SETTINGS: Settings = {
   id: "default-settings",
   clinic_name: "SKIN CURE",
@@ -20,9 +26,9 @@ export const DEFAULT_SETTINGS: Settings = {
   max_patients_per_day: 50,
   patient_counter: 5000,
   site_url: null,
-  hero_title_line1: "Premium",
-  hero_title_line2: "Skin Care",
-  hero_title_line3: "You Deserve",
+  hero_title_line1: DEFAULT_HERO_HEADLINE.line1,
+  hero_title_line2: DEFAULT_HERO_HEADLINE.line2,
+  hero_title_line3: DEFAULT_HERO_HEADLINE.line3,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
