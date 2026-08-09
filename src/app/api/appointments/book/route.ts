@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { bookAppointmentRequest } from "@/lib/book-appointment";
 import type { AppointmentFormData } from "@/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  return NextResponse.json({ ok: true, message: "POST appointment data to this endpoint" });
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as AppointmentFormData;
+    let body: AppointmentFormData;
+    try {
+      body = (await request.json()) as AppointmentFormData;
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
     const result = await bookAppointmentRequest(body);
 
     if ("error" in result) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
-
-    revalidatePath("/");
-    revalidatePath("/admin/appointments");
 
     return NextResponse.json({ success: true, appointmentId: result.appointmentId });
   } catch (error) {

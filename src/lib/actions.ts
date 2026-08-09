@@ -81,17 +81,8 @@ export async function logoutAction() {
 }
 
 export async function bookAppointment(data: AppointmentFormData) {
-  const { bookAppointmentRequest } = await import("@/lib/book-appointment");
-  const result = await bookAppointmentRequest(data);
-
-  if ("error" in result) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/");
-  revalidatePath("/admin/appointments");
-
-  return { success: true };
+  const { bookAppointmentAction } = await import("@/lib/book-appointment-action");
+  return bookAppointmentAction(data);
 }
 
 export async function updateAppointmentStatus(

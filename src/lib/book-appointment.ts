@@ -92,12 +92,16 @@ export async function bookAppointmentRequest(
       return { error: error?.message || "Failed to book appointment. Please try again." };
     }
 
-    await supabase.from("notifications").insert({
+    const { error: notificationError } = await supabase.from("notifications").insert({
       type: "new_booking",
       title: "New Appointment Booking",
       message: `${patient_name} booked for ${preferred_date} (${slot_time})`,
       reference_id: appointment.id,
     });
+
+    if (notificationError) {
+      console.error("Notification insert failed:", notificationError.message);
+    }
 
     return { success: true, appointmentId: appointment.id };
   } catch (error) {

@@ -6,6 +6,7 @@ import { Calendar, Clock, User, Phone, MessageSquare, Loader2, Sun, Moon } from 
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { generateWhatsAppMessage, getWhatsAppUrl, formatDate } from "@/lib/utils";
+import { bookAppointmentAction } from "@/lib/book-appointment-action";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Settings } from "@/types";
@@ -43,19 +44,13 @@ export function AppointmentForm({ settings }: AppointmentFormProps) {
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/appointments/book", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          age: parseInt(formData.age, 10),
-        }),
+      const result = await bookAppointmentAction({
+        ...formData,
+        age: parseInt(formData.age, 10),
       });
 
-      const result = (await response.json()) as { success?: boolean; error?: string };
-
-      if (!response.ok || result.error) {
-        toast.error(result.error || "Failed to book appointment. Please try again.");
+      if (!result?.success) {
+        toast.error(result?.error || "Failed to book appointment. Please try again.");
         return;
       }
 
