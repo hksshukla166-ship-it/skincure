@@ -48,11 +48,18 @@ export async function getSettings(): Promise<Settings | null> {
   if (!supabase) return DEFAULT_SETTINGS;
 
   const { data, error } = await supabase.from("settings").select("*").single();
-  if (error) {
-    if (isMissingTableError(error)) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...data, ...mergeHeroFromDefaults(data) };
-  }
-  return { ...DEFAULT_SETTINGS, ...data, ...mergeHeroFromDefaults(data) };
+  if (error && isMissingTableError(error)) return DEFAULT_SETTINGS;
+  if (error || !data) return DEFAULT_SETTINGS;
+
+  return buildSettings(data);
+}
+
+function buildSettings(data: Settings): Settings {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...data,
+    ...mergeHeroFromDefaults(data),
+  };
 }
 
 function mergeHeroFromDefaults(data: Partial<Settings> | null | undefined) {
